@@ -83,6 +83,7 @@ jobs:
             --group default \
             --namespace default
           rad env update ${{ inputs.environment }} \
+            --group default \
             --aws-region "${{ vars.AWS_REGION }}" \
             --aws-account-id "${{ vars.AWS_ACCOUNT_ID }}"
           echo "Radius environment '${{ inputs.environment }}' configured"
