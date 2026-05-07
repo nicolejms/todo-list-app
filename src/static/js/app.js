@@ -115,7 +115,30 @@ function AddItemForm({ onNewItem }) {
 }
 
 function ItemDisplay({ item, onItemUpdate, onItemRemoval }) {
-    const { Container, Row, Col, Button } = ReactBootstrap;
+    const { Container, Row, Col, Button, Spinner } = ReactBootstrap;
+    const fileInputRef = React.useRef(null);
+    const [uploading, setUploading] = React.useState(false);
+    const [expanded, setExpanded] = React.useState(false);
+    const [attachments, setAttachments] = React.useState(null);
+    const [count, setCount] = React.useState(
+        typeof item.attachmentCount === 'number' ? item.attachmentCount : null,
+    );
+
+    const refreshAttachments = React.useCallback(() => {
+        return fetch(`/items/${item.id}/attachments`)
+            .then(r => r.json())
+            .then(rows => {
+                setAttachments(rows);
+                setCount(rows.length);
+                return rows;
+            });
+    }, [item.id]);
+
+    React.useEffect(() => {
+        if (count === null) {
+            refreshAttachments();
+        }
+    }, [count, refreshAttachments]);
 
     const toggleCompletion = () => {
         fetch(`/items/${item.id}`, {
@@ -133,6 +156,47 @@ function ItemDisplay({ item, onItemUpdate, onItemRemoval }) {
     const removeItem = () => {
         fetch(`/items/${item.id}`, { method: 'DELETE' }).then(() =>
             onItemRemoval(item),
+        );
+    };
+
+    const onAttachClick = () => {
+        if (uploading) return;
+        fileInputRef.current && fileInputRef.current.click();
+    };
+
+    const onFileSelected = e => {
+        const file = e.target.files && e.target.files[0];
+        e.target.value = '';
+        if (!file) return;
+        setUploading(true);
+        const form = new FormData();
+        form.append('file', file);
+        fetch(`/items/${item.id}/attachments`, {
+            method: 'POST',
+            body: form,
+        })
+            .then(r => {
+                if (!r.ok) throw new Error('Upload failed');
+                return r.json();
+            })
+            .then(() => refreshAttachments())
+            .then(() => setExpanded(true))
+            .catch(err => {
+                console.error(err);
+                alert('Attachment upload failed: ' + err.message);
+            })
+            .finally(() => setUploading(false));
+    };
+
+    const onToggleExpand = () => {
+        const next = !expanded;
+        setExpanded(next);
+        if (next && attachments === null) refreshAttachments();
+    };
+
+    const onDeleteAttachment = att => {
+        fetch(`/attachments/${att.id}`, { method: 'DELETE' }).then(() =>
+            refreshAttachments(),
         );
     };
 
@@ -158,8 +222,44 @@ function ItemDisplay({ item, onItemUpdate, onItemRemoval }) {
                         />
                     </Button>
                 </Col>
-                <Col xs={10} className="name">
+                <Col xs={9} className="name">
                     {item.name}
+                </Col>
+                <Col xs={1} className="text-center">
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={onFileSelected}
+                    />
+                    <Button
+                        size="sm"
+                        variant="link"
+                        onClick={onAttachClick}
+                        aria-label="Attach file"
+                        title="Attach file"
+                        disabled={uploading}
+                    >
+                        {uploading ? (
+                            <Spinner animation="border" size="sm" />
+                        ) : (
+                            <i className="fa fa-paperclip" />
+                        )}
+                    </Button>
+                    {count > 0 && (
+                        <span
+                            onClick={onToggleExpand}
+                            style={{
+                                cursor: 'pointer',
+                                marginLeft: 4,
+                                fontSize: '0.75rem',
+                                color: '#0d6efd',
+                            }}
+                            title={expanded ? 'Hide attachments' : 'Show attachments'}
+                        >
+                            ({count})
+                        </span>
+                    )}
                 </Col>
                 <Col xs={1} className="text-center remove">
                     <Button
@@ -172,6 +272,36 @@ function ItemDisplay({ item, onItemUpdate, onItemRemoval }) {
                     </Button>
                 </Col>
             </Row>
+            {expanded && attachments && attachments.length > 0 && (
+                <Row>
+                    <Col xs={{ offset: 1, span: 10 }}>
+                        <ul style={{ paddingLeft: '1rem', marginBottom: '0.25rem' }}>
+                            {attachments.map(att => (
+                                <li key={att.id} style={{ fontSize: '0.85rem' }}>
+                                    <a
+                                        href={`/attachments/${att.id}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        {att.filename}
+                                    </a>{' '}
+                                    <span style={{ color: '#888' }}>
+                                        ({Math.max(1, Math.round(att.size / 1024))} KB)
+                                    </span>{' '}
+                                    <Button
+                                        size="sm"
+                                        variant="link"
+                                        onClick={() => onDeleteAttachment(att)}
+                                        aria-label="Remove attachment"
+                                    >
+                                        <i className="fa fa-times text-danger" />
+                                    </Button>
+                                </li>
+                            ))}
+                        </ul>
+                    </Col>
+                </Row>
+            )}
         </Container>
     );
 }

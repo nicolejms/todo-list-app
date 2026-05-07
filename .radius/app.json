@@ -1,0 +1,130 @@
+{
+  "resources": [
+    {
+      "id": "/planes/radius/local/resourceGroups/default/providers/Applications.Core/applications/todo-list-app",
+      "name": "todo-list-app",
+      "type": "Applications.Core/applications",
+      "provisioningState": "Succeeded",
+      "outputResources": [],
+      "connections": [
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Data/mySqlDatabases/mysql",
+          "direction": "Inbound"
+        },
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Security/secrets/dbsecret",
+          "direction": "Inbound"
+        },
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containerImages/demo-image",
+          "direction": "Inbound"
+        },
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containers/todo-list-frontend",
+          "direction": "Inbound"
+        },
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Storage/blobStorages/attachments",
+          "direction": "Inbound"
+        }
+      ]
+    },
+    {
+      "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Data/mySqlDatabases/mysql",
+      "name": "mysql",
+      "type": "Radius.Data/mySqlDatabases",
+      "provisioningState": "Succeeded",
+      "outputResources": [],
+      "connections": [
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Security/secrets/dbsecret",
+          "direction": "Outbound"
+        },
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Applications.Core/applications/todo-list-app",
+          "direction": "Outbound"
+        },
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containers/todo-list-frontend",
+          "direction": "Inbound"
+        }
+      ]
+    },
+    {
+      "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Security/secrets/dbsecret",
+      "name": "dbsecret",
+      "type": "Radius.Security/secrets",
+      "provisioningState": "Succeeded",
+      "outputResources": [],
+      "connections": [
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Applications.Core/applications/todo-list-app",
+          "direction": "Outbound"
+        },
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Data/mySqlDatabases/mysql",
+          "direction": "Inbound"
+        }
+      ]
+    },
+    {
+      "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containerImages/demo-image",
+      "name": "demo-image",
+      "type": "Radius.Compute/containerImages",
+      "provisioningState": "Succeeded",
+      "outputResources": [],
+      "connections": [
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Applications.Core/applications/todo-list-app",
+          "direction": "Outbound"
+        },
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containers/todo-list-frontend",
+          "direction": "Inbound"
+        }
+      ]
+    },
+    {
+      "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containers/todo-list-frontend",
+      "name": "todo-list-frontend",
+      "type": "Radius.Compute/containers",
+      "provisioningState": "Succeeded",
+      "outputResources": [],
+      "connections": [
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Storage/blobStorages/attachments",
+          "direction": "Outbound"
+        },
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Data/mySqlDatabases/mysql",
+          "direction": "Outbound"
+        },
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containerImages/demo-image",
+          "direction": "Outbound"
+        },
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Applications.Core/applications/todo-list-app",
+          "direction": "Outbound"
+        }
+      ]
+    },
+    {
+      "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Storage/blobStorages/attachments",
+      "name": "attachments",
+      "type": "Radius.Storage/blobStorages",
+      "provisioningState": "Succeeded",
+      "outputResources": [],
+      "connections": [
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Applications.Core/applications/todo-list-app",
+          "direction": "Outbound"
+        },
+        {
+          "id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containers/todo-list-frontend",
+          "direction": "Inbound"
+        }
+      ]
+    }
+  ]
+}

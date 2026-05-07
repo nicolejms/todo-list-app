@@ -2,6 +2,7 @@ extension radius
 extension radiusCompute
 extension radiusSecurity
 extension radiusData
+extension radiusStorage
 
 param environment string
 @secure()
@@ -77,6 +78,17 @@ resource todoContainer 'Radius.Compute/containers@2025-08-01-preview' = {
       demoContainerImage: {
         source: demoImage.id
       }
+      attachments: {
+        source: attachmentStorage.id
+      }
     }
+  }
+}
+
+resource attachmentStorage 'Radius.Storage/blobStorages@2025-08-01-preview' = {
+  name: 'attachments'
+  properties: {
+    environment: environment
+    application: todoApp.id
   }
 }

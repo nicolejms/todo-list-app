@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radius Application Graph - app</title>
+  <script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+  <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+  <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f6f8fa; }
+    #header { padding: 12px 20px; background: #24292f; color: #fff; display: flex; align-items: center; gap: 12px; }
+    #header h1 { font-size: 16px; font-weight: 600; }
+    #header .badge { background: #388bfd; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+    #toolbar { padding: 8px 20px; background: #fff; border-bottom: 1px solid #d0d7de; display: flex; gap: 8px; }
+    #toolbar button { padding: 4px 12px; border: 1px solid #d0d7de; border-radius: 6px; background: #fff; cursor: pointer; font-size: 12px; }
+    #toolbar button:hover { background: #f3f4f6; }
+    #cy { width: 100%; height: calc(100vh - 90px); }
+    #popup { display: none; position: absolute; background: #fff; border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 400px; z-index: 1000; font-size: 13px; }
+    #popup h3 { margin-bottom: 8px; font-size: 14px; }
+    #popup .field { margin-bottom: 6px; }
+    #popup .field-label { font-weight: 600; color: #57606a; }
+    #popup .close-btn { position: absolute; top: 8px; right: 12px; cursor: pointer; font-size: 18px; color: #57606a; }
+    #legend { position: absolute; bottom: 20px; right: 20px; background: #fff; border: 1px solid #d0d7de; border-radius: 8px; padding: 12px; font-size: 12px; }
+    #legend .item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    #legend .swatch { width: 12px; height: 12px; border-radius: 3px; border: 2px solid; }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <h1>app</h1>
+    <span class="badge">6 resources</span>
+    <span class="badge">9 connections</span>
+  </div>
+  <div id="toolbar">
+    <button onclick="cy.fit()" title="Fit graph to viewport">⊡ Fit</button>
+    <button onclick="cy.zoom(cy.zoom() * 1.2)" title="Zoom in">+ Zoom In</button>
+    <button onclick="cy.zoom(cy.zoom() / 1.2)" title="Zoom out">− Zoom Out</button>
+    <button onclick="cy.center()" title="Center graph">◎ Center</button>
+  </div>
+  <div id="cy"></div>
+  <div id="popup">
+    <span class="close-btn" onclick="closePopup()">×</span>
+    <div id="popup-content"></div>
+  </div>
+  <div id="legend">
+    <!-- Populated by script -->
+  </div>
+
+  <script>
+    // ===== GRAPH DATA (replace with actual data) =====
+    const graphData = {"resources": [{"id": "/planes/radius/local/resourceGroups/default/providers/Applications.Core/applications/todo-list-app", "name": "todo-list-app", "type": "Applications.Core/applications", "provisioningState": "Succeeded", "outputResources": [], "connections": [{"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Data/mySqlDatabases/mysql", "direction": "Inbound"}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Security/secrets/dbsecret", "direction": "Inbound"}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containerImages/demo-image", "direction": "Inbound"}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containers/todo-list-frontend", "direction": "Inbound"}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Storage/blobStorages/attachments", "direction": "Inbound"}]}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Data/mySqlDatabases/mysql", "name": "mysql", "type": "Radius.Data/mySqlDatabases", "provisioningState": "Succeeded", "outputResources": [], "connections": [{"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Security/secrets/dbsecret", "direction": "Outbound"}, {"id": "/planes/radius/local/resourceGroups/default/providers/Applications.Core/applications/todo-list-app", "direction": "Outbound"}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containers/todo-list-frontend", "direction": "Inbound"}]}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Security/secrets/dbsecret", "name": "dbsecret", "type": "Radius.Security/secrets", "provisioningState": "Succeeded", "outputResources": [], "connections": [{"id": "/planes/radius/local/resourceGroups/default/providers/Applications.Core/applications/todo-list-app", "direction": "Outbound"}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Data/mySqlDatabases/mysql", "direction": "Inbound"}]}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containerImages/demo-image", "name": "demo-image", "type": "Radius.Compute/containerImages", "provisioningState": "Succeeded", "outputResources": [], "connections": [{"id": "/planes/radius/local/resourceGroups/default/providers/Applications.Core/applications/todo-list-app", "direction": "Outbound"}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containers/todo-list-frontend", "direction": "Inbound"}]}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containers/todo-list-frontend", "name": "todo-list-frontend", "type": "Radius.Compute/containers", "provisioningState": "Succeeded", "outputResources": [], "connections": [{"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Storage/blobStorages/attachments", "direction": "Outbound"}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Data/mySqlDatabases/mysql", "direction": "Outbound"}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containerImages/demo-image", "direction": "Outbound"}, {"id": "/planes/radius/local/resourceGroups/default/providers/Applications.Core/applications/todo-list-app", "direction": "Outbound"}]}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Storage/blobStorages/attachments", "name": "attachments", "type": "Radius.Storage/blobStorages", "provisioningState": "Succeeded", "outputResources": [], "connections": [{"id": "/planes/radius/local/resourceGroups/default/providers/Applications.Core/applications/todo-list-app", "direction": "Outbound"}, {"id": "/planes/radius/local/resourceGroups/default/providers/Radius.Compute/containers/todo-list-frontend", "direction": "Inbound"}]}]};
+
+    // ===== DIFF DATA (null if not in diff mode) =====
+    const diffData = null;
+
+    // ===== TYPE COLOR MAPPING =====
+    function getTypeColor(type) {
+      if (type.includes('Radius.Compute') || type.includes('/containers')) return '#6366f1';
+      if (type.includes('Radius.Data') || type.includes('Datastores')) return '#059669';
+      if (type.includes('Radius.Security')) return '#d97706';
+      if (type.includes('Radius.Storage') || type.includes('/blobStorages') || type.includes('/fileShares')) return '#0d9488';
+      if (type.includes('/gateways')) return '#0891b2';
+      if (type.includes('/applications')) return '#57606a';
+      if (type.includes('Messaging')) return '#ea580c';
+      if (type.includes('Dapr')) return '#7c3aed';
+      return '#d0d7de';
+    }
+
+    // ===== TYPE ICON SVG (16x16 inline data URIs) =====
+    function getTypeIcon(type) {
+      const svg = (path, color) => 'data:image/svg+xml;utf8,' + encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`
+      );
+      if (type.includes('Radius.Compute') || type.includes('/containers'))
+        return svg('<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>', '#6366f1');
+      if (type.includes('Radius.Data') || type.includes('Datastores'))
+        return svg('<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>', '#059669');
+      if (type.includes('Radius.Security'))
+        return svg('<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', '#d97706');
+      if (type.includes('Radius.Storage') || type.includes('/blobStorages') || type.includes('/fileShares'))
+        return svg('<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>', '#0d9488');
+      if (type.includes('/gateways'))
+        return svg('<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>', '#0891b2');
+      if (type.includes('/applications'))
+        return svg('<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>', '#57606a');
+      if (type.includes('Messaging'))
+        return svg('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>', '#ea580c');
+      if (type.includes('Dapr'))
+        return svg('<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>', '#7c3aed');
+      return svg('<circle cx="12" cy="12" r="10"/>', '#d0d7de');
+    }
+
+    // ===== BUILD CYTOSCAPE ELEMENTS =====
+    function buildElements(data, diff) {
+      const elements = [];
+      const resources = data.resources || [];
+
+      resources.forEach(resource => {
+        const shortType = resource.type.split('/').pop();
+        const borderColor = diff ? getDiffColor(getResourceDiffStatus(resource, diff)) : getTypeColor(resource.type);
+        const borderWidth = diff ? 3 : 3;
+        const icon = getTypeIcon(resource.type);
+
+        elements.push({
+          group: 'nodes',
+          data: {
+            id: resource.id.toLowerCase(),
+            label: resource.name + '\n' + shortType,
+            name: resource.name,
+            type: resource.type,
+            shortType: shortType,
+            provisioningState: resource.provisioningState,
+            outputResources: resource.outputResources || [],
+            borderColor: borderColor,
+            borderWidth: borderWidth,
+            icon: icon
+          }
+        });
+      });
+
+      // Add edges (outbound connections only to avoid duplicates)
+      resources.forEach(resource => {
+        (resource.connections || []).forEach(conn => {
+          if (conn.direction === 'Outbound') {
+            elements.push({
+              group: 'edges',
+              data: {
+                id: resource.id.toLowerCase() + '->' + conn.id.toLowerCase(),
+                source: resource.id.toLowerCase(),
+                target: conn.id.toLowerCase()
+              }
+            });
+          }
+        });
+      });
+
+      return elements;
+    }
+
+    function getResourceDiffStatus(resource, diff) {
+      const id = resource.id.toLowerCase();
+      if (diff.added.some(r => r.id.toLowerCase() === id)) return 'added';
+      if (diff.removed.some(r => r.id.toLowerCase() === id)) return 'removed';
+      if (diff.modified.some(r => r.id.toLowerCase() === id)) return 'modified';
+      return 'unchanged';
+    }
+
+    function getDiffColor(status) {
+      switch (status) {
+        case 'added': return '#1a7f37';
+        case 'removed': return '#cf222e';
+        case 'modified': return '#9a6700';
+        default: return '#57606a';
+      }
+    }
+
+    // ===== INITIALIZE CYTOSCAPE =====
+    const elements = buildElements(graphData, diffData);
+
+    const cy = cytoscape({
+      container: document.getElementById('cy'),
+      elements: elements,
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'shape': 'roundrectangle',
+            'width': 150,
+            'height': 55,
+            'background-color': '#ffffff',
+            'border-width': 'data(borderWidth)',
+            'border-color': 'data(borderColor)',
+            'label': 'data(label)',
+            'text-wrap': 'wrap',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '10px',
+            'font-family': '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
+            'color': '#24292f',
+            'background-image': 'data(icon)',
+            'background-width': '14px',
+            'background-height': '14px',
+            'background-position-x': '6px',
+            'background-position-y': '6px',
+            'background-clip': 'none',
+            'background-image-containment': 'over'
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 1.5,
+            'line-color': '#57606a',
+            'target-arrow-color': '#57606a',
+            'target-arrow-shape': 'triangle',
+            'curve-style': 'unbundled-bezier',
+            'arrow-scale': 0.8
+          }
+        }
+      ],
+      layout: {
+        name: 'dagre',
+        rankDir: 'TB',
+        nodeSep: 100,
+        rankSep: 120,
+        edgeSep: 30,
+        ranker: 'network-simplex',
+        animate: false
+      }
+    });
+
+    // ===== POPUP =====
+    cy.on('tap', 'node', function(evt) {
+      const node = evt.target;
+      const data = node.data();
+      const popup = document.getElementById('popup');
+      const content = document.getElementById('popup-content');
+
+      let html = '<h3>' + data.name + '</h3>';
+      html += '<div class="field"><span class="field-label">Type:</span> ' + data.type + '</div>';
+      html += '<div class="field"><span class="field-label">State:</span> ' + (data.provisioningState || 'Unknown') + '</div>';
+      html += '<div class="field"><span class="field-label">ID:</span><br><code style="font-size:11px;word-break:break-all;">' + data.id + '</code></div>';
+
+      if (data.outputResources && data.outputResources.length > 0) {
+        html += '<div class="field"><span class="field-label">Output Resources:</span><ul style="margin:4px 0 0 16px;">';
+        data.outputResources.forEach(r => {
+          html += '<li>' + r.name + ' (' + r.type + ')</li>';
+        });
+        html += '</ul></div>';
+      }
+
+      content.innerHTML = html;
+      popup.style.display = 'block';
+      popup.style.left = (evt.renderedPosition.x + 20) + 'px';
+      popup.style.top = (evt.renderedPosition.y + 20) + 'px';
+    });
+
+    cy.on('tap', function(evt) {
+      if (evt.target === cy) closePopup();
+    });
+
+    function closePopup() {
+      document.getElementById('popup').style.display = 'none';
+    }
+
+    // ===== LEGEND =====
+    (function renderLegend() {
+      const legend = document.getElementById('legend');
+      const typeItems = [
+        { color: '#6366f1', label: 'Compute / Containers' },
+        { color: '#059669', label: 'Data / Datastores' },
+        { color: '#d97706', label: 'Security' },
+        { color: '#0d9488', label: 'Storage' },
+        { color: '#0891b2', label: 'Gateways' },
+        { color: '#ea580c', label: 'Messaging' },
+        { color: '#7c3aed', label: 'Dapr' },
+        { color: '#57606a', label: 'Applications' },
+        { color: '#d0d7de', label: 'Other' }
+      ];
+      let html = '<div style="font-weight:600;margin-bottom:6px;">Resource Types</div>';
+      for (const t of typeItems) {
+        html += `<div class="item"><div class="swatch" style="border-color:${t.color};background:${t.color}22;"></div> ${t.label}</div>`;
+      }
+      if (diffData) {
+        html += '<div style="font-weight:600;margin:8px 0 6px;">Diff Status</div>';
+        html += '<div class="item"><div class="swatch" style="border-color:#1a7f37;background:#e6f9ed;"></div> Added</div>';
+        html += '<div class="item"><div class="swatch" style="border-color:#cf222e;background:#ffebe9;"></div> Removed</div>';
+        html += '<div class="item"><div class="swatch" style="border-color:#9a6700;background:#fff8c5;"></div> Modified</div>';
+        html += '<div class="item"><div class="swatch" style="border-color:#57606a;background:#f6f8fa;"></div> Unchanged</div>';
+      }
+      legend.innerHTML = html;
+    })();
+  </script>
+</body>
+</html>

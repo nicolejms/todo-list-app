@@ -5,6 +5,11 @@ const ITEM = { id: 12345 };
 jest.mock('../../src/persistence', () => ({
     removeItem: jest.fn(),
     getItem: jest.fn(),
+    removeAttachmentsForItem: jest.fn().mockResolvedValue([]),
+}));
+jest.mock('../../src/persistence/blobStorage', () => ({
+    isConfigured: jest.fn().mockReturnValue(false),
+    deleteObject: jest.fn(),
 }));
 
 test('it removes item correctly', async () => {

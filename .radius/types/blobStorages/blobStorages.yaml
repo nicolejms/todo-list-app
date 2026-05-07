@@ -1,0 +1,53 @@
+namespace: Radius.Storage
+types:
+  blobStorages:
+    description: |
+      A portable blob (object) storage resource. Recipes provision either an
+      S3-compatible service (e.g. MinIO on Kubernetes) or native cloud object
+      storage (e.g. AWS S3) and surface a connection endpoint + access key.
+
+      ## Bicep Usage
+
+      ```bicep
+      extension radiusStorage
+
+      resource attachments 'Radius.Storage/blobStorages@2025-08-01-preview' = {
+        name: 'attachments'
+        properties: {
+          environment: environment
+          application: application
+        }
+      }
+      ```
+
+      ## Connection Environment Variables
+
+      When connected from a `Radius.Compute/containers` resource, the following
+      env vars are injected (NAME = upper-cased connection name):
+
+      - `CONNECTION_<NAME>_ENDPOINT` — base URL of the S3-compatible API
+      - `CONNECTION_<NAME>_KEY`      — secret access key
+
+      Apps should use the AWS SDK (`@aws-sdk/client-s3`) with
+      `endpoint`, `forcePathStyle: true` and the access key above.
+
+    apiVersions:
+      '2025-08-01-preview':
+        schema:
+          type: object
+          properties:
+            environment:
+              type: string
+              description: "(Required) The Radius Environment ID."
+            application:
+              type: string
+              description: "(Optional) The Radius Application ID."
+            endpoint:
+              type: string
+              description: The S3-compatible endpoint URL.
+              readOnly: true
+            key:
+              type: string
+              description: The secret access key for the endpoint.
+              readOnly: true
+          required: [environment]
