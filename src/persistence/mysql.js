@@ -43,8 +43,82 @@ async function init() {
             err => {
                 if (err) return rej(err);
 
-                console.log(`Connected to mysql db at host ${HOST}`);
+                pool.query(
+                    'CREATE TABLE IF NOT EXISTS todo_attachments (id varchar(36) PRIMARY KEY, item_id varchar(36), filename varchar(255), content_type varchar(255), size bigint, blob_key varchar(512), created_at bigint) DEFAULT CHARSET utf8mb4',
+                    err2 => {
+                        if (err2) return rej(err2);
+                        console.log(`Connected to mysql db at host ${HOST}`);
+                        acc();
+                    },
+                );
+            },
+        );
+    });
+}
+
+async function addAttachment(att) {
+    return new Promise((acc, rej) => {
+        pool.query(
+            'INSERT INTO todo_attachments (id, item_id, filename, content_type, size, blob_key, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [att.id, att.item_id, att.filename, att.content_type, att.size, att.blob_key, att.created_at],
+            err => {
+                if (err) return rej(err);
                 acc();
+            },
+        );
+    });
+}
+
+async function listAttachmentsForItem(itemId) {
+    return new Promise((acc, rej) => {
+        pool.query(
+            'SELECT id, item_id, filename, content_type, size, blob_key, created_at FROM todo_attachments WHERE item_id = ? ORDER BY created_at ASC',
+            [itemId],
+            (err, rows) => {
+                if (err) return rej(err);
+                acc(rows);
+            },
+        );
+    });
+}
+
+async function getAttachment(id) {
+    return new Promise((acc, rej) => {
+        pool.query(
+            'SELECT id, item_id, filename, content_type, size, blob_key, created_at FROM todo_attachments WHERE id = ?',
+            [id],
+            (err, rows) => {
+                if (err) return rej(err);
+                acc(rows[0]);
+            },
+        );
+    });
+}
+
+async function removeAttachment(id) {
+    return new Promise((acc, rej) => {
+        pool.query('DELETE FROM todo_attachments WHERE id = ?', [id], err => {
+            if (err) return rej(err);
+            acc();
+        });
+    });
+}
+
+async function removeAttachmentsForItem(itemId) {
+    return new Promise((acc, rej) => {
+        pool.query(
+            'SELECT id, blob_key FROM todo_attachments WHERE item_id = ?',
+            [itemId],
+            (err, rows) => {
+                if (err) return rej(err);
+                pool.query(
+                    'DELETE FROM todo_attachments WHERE item_id = ?',
+                    [itemId],
+                    err2 => {
+                        if (err2) return rej(err2);
+                        acc(rows || []);
+                    },
+                );
             },
         );
     });
@@ -132,4 +206,9 @@ module.exports = {
     storeItem,
     updateItem,
     removeItem,
+    addAttachment,
+    listAttachmentsForItem,
+    getAttachment,
+    removeAttachment,
+    removeAttachmentsForItem,
 };

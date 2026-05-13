@@ -43,6 +43,14 @@ resource dbSecret 'Radius.Security/secrets@2025-08-01-preview' = {
   }
 }
 
+resource attachmentStorage 'Radius.Data/blobStorages@2025-08-01-preview' = {
+  name: 'attachments'
+  properties: {
+    environment: environment
+    application: todoApp.id
+  }
+}
+
 resource demoImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
   name: 'demo-image'
   properties: {
@@ -73,6 +81,9 @@ resource todoContainer 'Radius.Compute/containers@2025-08-01-preview' = {
     connections: {
       mysqldb: {
         source: database.id
+      }
+      attachments: {
+        source: attachmentStorage.id
       }
       demoContainerImage: {
         source: demoImage.id

@@ -1,0 +1,57 @@
+namespace: Radius.Data
+types:
+  blobStorages:
+    description: |
+      A portable blob (object) storage resource for storing binary attachments
+      (files, images, documents). Recipes provision either an S3-compatible
+      service (e.g. MinIO on Kubernetes, AWS S3) or a native cloud object
+      store (Azure Blob Storage) and surface a connection endpoint + access key.
+
+      ## Bicep Usage
+
+      ```bicep
+      extension radiusData
+
+      resource attachments 'Radius.Data/blobStorages@2025-08-01-preview' = {
+        name: 'attachments'
+        properties: {
+          environment: environment
+          application: application
+        }
+      }
+      ```
+
+      ## Connection Environment Variables
+
+      When connected from a `Radius.Compute/containers` resource, the following
+      env vars are injected (NAME = upper-cased connection name):
+
+      - `CONNECTION_<NAME>_ENDPOINT` — base URL of the object-storage API
+      - `CONNECTION_<NAME>_KEY`      — secret access key
+
+      For S3-style recipes (kubernetes, aws) apps should use the AWS SDK
+      (`@aws-sdk/client-s3`) with `endpoint`, `forcePathStyle: true` and a
+      fixed access key id of `radius`. The Azure recipe outputs an Azure Blob
+      service endpoint and storage-account access key for use with
+      `@azure/storage-blob`.
+
+    apiVersions:
+      '2025-08-01-preview':
+        schema:
+          type: object
+          properties:
+            environment:
+              type: string
+              description: "(Required) The Radius Environment ID."
+            application:
+              type: string
+              description: "(Optional) The Radius Application ID."
+            endpoint:
+              type: string
+              description: The object-storage endpoint URL.
+              readOnly: true
+            key:
+              type: string
+              description: The secret access key for the endpoint.
+              readOnly: true
+          required: [environment]
