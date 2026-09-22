@@ -1,0 +1,110 @@
+{
+  "resources": [
+    {
+      "id": "/planes/radius/local/resourcegroups/default/providers/Radius.Security/secrets/mysql-client-credentials",
+      "name": "mysql-client-credentials",
+      "type": "Radius.Security/secrets",
+      "provisioningState": "NotSpecified",
+      "diffHash": "sha256:c2963d7acaa76c7cd86b26144b35bc4af0cce29da5a6508c27f020fbe20310e5",
+      "properties": {
+        "codeReference": "src/persistence/mysql.js#L10"
+      },
+      "connections": [
+        {
+          "id": "/planes/radius/local/resourcegroups/default/providers/Radius.Compute/containers/todo-list-app",
+          "direction": "Inbound",
+          "kind": "Dependency"
+        }
+      ],
+      "outputResources": []
+    },
+    {
+      "id": "/planes/radius/local/resourcegroups/default/providers/Radius.Data/mySqlDatabases/mysql",
+      "name": "mysql",
+      "type": "Radius.Data/mySqlDatabases",
+      "provisioningState": "NotSpecified",
+      "diffHash": "sha256:5c22d77dbdd37b31c5e7e4db4b137763b9453e76dfe672be113a581b96ec347a",
+      "properties": {
+        "codeReference": "compose.yaml#L16"
+      },
+      "connections": [
+        {
+          "id": "/planes/radius/local/resourcegroups/default/providers/Radius.Compute/containers/todo-list-app",
+          "direction": "Inbound",
+          "kind": "Dependency"
+        }
+      ],
+      "outputResources": []
+    },
+    {
+      "id": "/planes/radius/local/resourcegroups/default/providers/Radius.Security/secrets/radius-ghcr-registry-creds",
+      "name": "radius-ghcr-registry-creds",
+      "type": "Radius.Security/secrets",
+      "provisioningState": "NotSpecified",
+      "diffHash": "sha256:b8ff653c904fdfc11a1097db71bec9d8e850cf5247eb462b2b7a264b709ea70a",
+      "properties": {
+        "codeReference": ".github/workflows/run-rad-commands-azure.yml#L240"
+      },
+      "connections": [
+        {
+          "id": "/planes/radius/local/resourcegroups/default/providers/Radius.Compute/containerImages/todo-list-app-image",
+          "direction": "Inbound",
+          "kind": "Dependency"
+        }
+      ],
+      "outputResources": []
+    },
+    {
+      "id": "/planes/radius/local/resourcegroups/default/providers/Radius.Compute/containers/todo-list-app",
+      "name": "todo-list-app",
+      "type": "Radius.Compute/containers",
+      "provisioningState": "NotSpecified",
+      "diffHash": "sha256:a19ee4f11eb1099a768ce59a09765595e72b9f03ce93c80f245c64b1b5a57cb2",
+      "properties": {
+        "codeReference": "src/index.js#L18"
+      },
+      "connections": [
+        {
+          "id": "/planes/radius/local/resourcegroups/default/providers/Radius.Compute/containerImages/todo-list-app-image",
+          "direction": "Outbound",
+          "kind": "Dependency"
+        },
+        {
+          "id": "/planes/radius/local/resourcegroups/default/providers/Radius.Data/mySqlDatabases/mysql",
+          "direction": "Outbound",
+          "kind": "Dependency"
+        },
+        {
+          "id": "/planes/radius/local/resourcegroups/default/providers/Radius.Security/secrets/mysql-client-credentials",
+          "direction": "Outbound",
+          "kind": "Dependency"
+        }
+      ],
+      "outputResources": []
+    },
+    {
+      "id": "/planes/radius/local/resourcegroups/default/providers/Radius.Compute/containerImages/todo-list-app-image",
+      "name": "todo-list-app-image",
+      "type": "Radius.Compute/containerImages",
+      "provisioningState": "NotSpecified",
+      "diffHash": "sha256:83b63ffde49dcd9c76088417aef76ae9b22e866ad43eb4b88b80ebe37122ca81",
+      "properties": {
+        "codeReference": "Dockerfile#L1"
+      },
+      "connections": [
+        {
+          "id": "/planes/radius/local/resourcegroups/default/providers/Radius.Compute/containers/todo-list-app",
+          "direction": "Inbound",
+          "kind": "Dependency"
+        },
+        {
+          "id": "/planes/radius/local/resourcegroups/default/providers/Radius.Security/secrets/radius-ghcr-registry-creds",
+          "direction": "Outbound",
+          "kind": "Dependency"
+        }
+      ],
+      "outputResources": []
+    }
+  ],
+  "icons": {}
+}
