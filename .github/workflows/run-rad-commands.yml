@@ -16,7 +16,7 @@ on:
       environment:
         description: 'GitHub Environment name'
         required: true
-        default: 'az-new'
+        default: 'aztest'
       image:
         description: 'Container image passed only when the application template declares the image parameter'
         required: false
@@ -46,7 +46,7 @@ jobs:
   detect:
     name: Detect provider
     runs-on: ubuntu-24.04
-    environment: ${{ inputs.environment || 'az-new' }}
+    environment: ${{ inputs.environment || 'aztest' }}
     outputs:
       provider: ${{ steps.detect.outputs.provider }}
     steps:
@@ -69,7 +69,7 @@ jobs:
     if: ${{ needs.detect.outputs.provider == 'azure' }}
     uses: ./.github/workflows/run-rad-commands-azure.yml
     with:
-      environment: ${{ inputs.environment || 'az-new' }}
+      environment: ${{ inputs.environment || 'aztest' }}
       image: ${{ inputs.image }}
       rad_commands: ${{ inputs.rad_commands }}
     secrets: inherit
