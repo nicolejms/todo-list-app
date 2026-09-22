@@ -70,9 +70,9 @@ resource todoImage 'Radius.Compute/containerImages@2025-08-01-preview' = {
     environment: environment
     application: todoApp.id
     codeReference: 'Dockerfile#L1'
-    tag: '9f68e8df32fdc5df05a7bb757c8b48f9480dd62e'
+    tag: '8eae5f5711ea823994fdaffe51128c3a23cec8ad'
     build: {
-      source: 'git::https://github.com/nicolejms/todo-list-app.git?ref=9f68e8df32fdc5df05a7bb757c8b48f9480dd62e'
+      source: 'git::https://github.com/nicolejms/todo-list-app.git?ref=8eae5f5711ea823994fdaffe51128c3a23cec8ad'
       platforms: [
         'linux/amd64'
       ]
